@@ -36,6 +36,20 @@ def AWGN(data, mu, Nsigma, symbol_count):
 
     return  res
 
+def err_prob(X, Y, data):
+    count = 0
+
+    x1 = map(lambda x: 0 if x>=0 else 1, X)
+    y1 = map(lambda x: 0 if x>=0 else 1, Y)
+    z = map(lambda x,y: (x, y), x1, y1)
+
+    for i in range(len(z)):
+        for j in range(2):
+            if z[i][j] != data[i][j]:
+                count += 1/2.0
+
+    return count/(len(data)) * 100
+
 def part_1(symbol_count, mu, sigma, Nsigma):
 
     data, H = ChannelGain(make_complex(gen_symbol(symbol_count)), mu, sigma, symbol_count)    
@@ -49,18 +63,6 @@ def part_1(symbol_count, mu, sigma, Nsigma):
     plt.scatter([0.7, 0.7, -0.7, -0.7], [0.7, -0.7, 0.7, -0.7], color="yellow")
     plt.show()
 
-def err_prob(X, Y, data):
-    count = 0
-
-    x1 = map(lambda x: 2*(int(x>=0))-1, X)
-    y1 = map(lambda x: 2*(int(x>=0))-1, Y)
-    z = map(lambda x,y: (x, y), x1, y1)
-
-    for i in range(len(z)):
-        if z[i] == data[i]:
-            count += 1
-
-    return count/(len(data)*1.0) * 100
 
 def part_2(test_count, symbol_count, mu, sigma):
     err_mean = []
@@ -75,8 +77,8 @@ def part_2(test_count, symbol_count, mu, sigma):
         Y = map(lambda x, y: (x/y).imag, data, H)
         
         err_mean.append(err_prob(X, Y, symbols))
-        SNR_points.append(i+1)
+        SNR_points.append((i)*1.0)
 
     plt.grid(color='r', linestyle='--', linewidth=1)
-    plt.scatter(SNR_points, err_mean, color='red')
+    plt.plot(SNR_points, err_mean, color='red')
     plt.show()
