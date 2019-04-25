@@ -35,13 +35,16 @@ def AWGN(data, mu, Nsigma, symbol_count):
     res = map(lambda x,y: x+y, data, N)
 
     return  res
-
-def err_prob(X, Y, data):
-    count = 0
+def convert_to_symbol(X, Y):
 
     x1 = map(lambda x: 0 if x>=0 else 1, X)
     y1 = map(lambda x: 0 if x>=0 else 1, Y)
     z = map(lambda x,y: (x, y), x1, y1)
+
+    return z
+
+def err_prob(z, data):
+    count = 0
 
     for i in range(len(z)):
         for j in range(2):
@@ -49,6 +52,99 @@ def err_prob(X, Y, data):
                 count += 1/2.0
 
     return count/(len(data)) * 100
+
+def gen_data(size):
+    data = []
+    for i in range(size):
+        data.append((random.randint(0, 1)))
+
+    return data
+
+def gen_parity(data):
+    return [data[0] ^ data[1] ^ data[2], data[0] ^ data[1] ^ data[3], data[1] ^ data[2] ^ data[3]]
+
+def to_hamming(data):
+    output = []
+    
+    gen_matrix = np.matrix([
+        [1, 1, 0, 1],
+        [1, 0, 1, 1],
+        [1, 0, 0, 0],
+        [0, 1, 1, 1],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]]
+    )
+    for i in range(0, len(data), 4):
+        mat = np.array(data[i:i+4]).reshape(4, 1)
+        data_out = np.dot(gen_matrix, mat).reshape(1, 7).tolist()[0]
+        x = map(lambda x: x%2, data_out)
+
+        output += x
+    
+    return output
+
+def list_to_dec(data):
+    out = 0
+    for bit in data:
+        out = (out<<1) | bit
+    
+    return out
+
+def unpack(data):
+    out = []
+    for i in data:
+        out.append(i[0])
+        out.append(i[1])
+
+    return out
+
+def pack_data(data):
+    out = []
+    for i in range(0, len(data), 2):
+        out.append((data[i], data[i+1]))
+    
+    return out
+
+def err_correction(data):
+    output = []
+
+    H = np.array([
+        [1, 0, 1, 0, 1, 0, 1],
+        [0, 1, 1, 0, 0, 1, 1],
+        [0, 0, 0, 1, 1, 1, 1]
+    ])
+
+    for i in range(0, len(data), 7):
+        r = np.array(data[i:i+7]).reshape(7, 1)
+        z = np.dot(H, r).reshape(1, 3).tolist()[0]
+        z = map(lambda x: x%2, z)
+        err_ind = list_to_dec(z)
+        if err_ind != 0:
+            r[err_ind-1] = 1 - r[err_ind-1]
+        output += r.reshape(1, 7).tolist()[0]
+    
+    return output
+
+def decode(data):
+    out = []
+    R = np.array([
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1]
+    ])
+    for i in range(0, len(data), 7):
+        Rr = np.dot(R, np.array(data[i:i+7]).reshape(7, 1))
+        out += Rr.reshape(1, 4).tolist()[0]
+
+    return out
+
+def make_tuple(data):
+    res = []
+    for i in range(0, len(data), 2):
+        res.append((data[i], data[i+1]))
+    return res
 
 def part_1(symbol_count, mu, sigma, Nsigma):
 
@@ -75,8 +171,35 @@ def part_2(test_count, symbol_count, mu, sigma):
 
         X = map(lambda x, y: (x/y).real, data, H)
         Y = map(lambda x, y: (x/y).imag, data, H)
+        z = convert_to_symbol(X, Y)
         
-        err_mean.append(err_prob(X, Y, symbols))
+        err_mean.append(err_prob(z, symbols))
+        SNR_points.append((i)*1.0)
+
+    plt.grid(color='r', linestyle='--', linewidth=1)
+    plt.plot(SNR_points, err_mean, color='red')
+    plt.show()
+
+def part3(test_count, symbol_count, mu, sigma):
+    err_mean = []
+    SNR_points = []
+    for i in range(test_count):
+        raw_data1 = gen_data(symbol_count)
+        raw_data = to_hamming(raw_data1)
+        raw_data = make_tuple(raw_data)
+        data = make_complex(raw_data)
+        data, H = ChannelGain(data, mu, sigma, len(data))
+        data = AWGN(data, mu, 1/((i+1)*1.0), len(data))
+
+        X = map(lambda x, y: (x/y).real, data, H)
+        Y = map(lambda x, y: (x/y).imag, data, H)
+        
+        data = convert_to_symbol(X, Y)
+        data = unpack(data)
+        data = err_correction(data)
+        data = decode(data)
+        data = pack_data(data)
+        err_mean.append(err_prob(pack_data(raw_data1), data))
         SNR_points.append((i)*1.0)
 
     plt.grid(color='r', linestyle='--', linewidth=1)
