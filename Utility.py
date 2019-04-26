@@ -217,7 +217,7 @@ def part3(test_count, symbol_count, mu, sigma):
     plt.show()
 
 
-def part4(symbol_count, mu, sigma, Nsigma):
+def part4_1(symbol_count, mu, sigma, Nsigma):
     data = gen_data(symbol_count)
     data = QAM_to_complex(data)
     data, H = ChannelGain(data, mu, sigma, len(data))
@@ -230,4 +230,25 @@ def part4(symbol_count, mu, sigma, Nsigma):
     y = (np.array([3, 1, -1, -3]*4)*(1/(3*2**(1/2.0)))).tolist()
 
     plt.scatter(x, y, color="yellow")
+    plt.show()
+
+def part4_2(test_count, symbol_count, mu, sigma):
+    err_mean = []
+    SNR_points = []
+    for i in range(test_count):
+        raw_data1 = gen_data(symbol_count)
+        raw_data = QAM_to_complex(raw_data1)
+        data, H = ChannelGain(raw_data, mu, sigma, symbol_count/4)    
+        data = AWGN(data, mu, 1/((i+0+1)*2.0), symbol_count/4)
+
+        X = map(lambda x, y: (x/y).real, data, H)
+        Y = map(lambda x, y: (x/y).imag, data, H)
+        z = QAM_demodulate(X, Y)
+        
+        print("err prob for i = " + str(i) +" = " + str(err_prob(unpack(z, 4), raw_data1)))
+        err_mean.append(err_prob(unpack(z, 4), raw_data1))
+        SNR_points.append((i/2))
+
+    plt.grid(color='r', linestyle='--', linewidth=1)
+    plt.plot(SNR_points, err_mean, color='red')
     plt.show()
