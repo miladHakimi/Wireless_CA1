@@ -155,7 +155,7 @@ def QAM_to_complex(data):
 
     return output
 def QAM_demodulate(X, Y):
-    return map(lambda x, y: (0 if x<0 else 1, 1 if (abs(x)-0.59)<0 else 0, 0 if y<0 else 1, 1 if (abs(y)-0.59)<0 else 0), X, Y)
+    return map(lambda x, y: (0 if x<0 else 1, 1 if (abs(x)-0.31)<0 else 0, 0 if y<0 else 1, 1 if (abs(y)-0.31)<0 else 0), X, Y)
     
 def part_1(symbol_count, mu, sigma, Nsigma):
 
@@ -165,6 +165,9 @@ def part_1(symbol_count, mu, sigma, Nsigma):
     X = map(lambda x, y: (x/y).real, data, H)
     Y = map(lambda x, y: (x/y).imag, data, H)
     
+    axes = plt.gca()
+    axes.set_xlim([-2, 2])
+    axes.set_ylim([-2, 2])
     plt.grid(color='r', linestyle='--', linewidth=1)
     plt.scatter(X, Y, color='red')
     plt.scatter([0.7, 0.7, -0.7, -0.7], [0.7, -0.7, 0.7, -0.7], color="yellow")
