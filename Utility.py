@@ -48,11 +48,10 @@ def err_prob(z, data):
     count = 0
 
     for i in range(len(z)):
-        for j in range(2):
-            if z[i][j] != data[i][j]:
-                count += 1/2.0
+            if z[i] != data[i]:
+                count += 1
 
-    return count/(len(data)) * 100
+    return count/(len(data)*1.0) * 100
 
 def gen_data(size):
     data = []
@@ -92,11 +91,11 @@ def list_to_dec(data):
     
     return out
 
-def unpack(data):
+def unpack(data, symbol_bits=2):
     out = []
     for i in data:
-        out.append(i[0])
-        out.append(i[1])
+        for j in range(symbol_bits):
+            out.append(i[j])
 
     return out
 
@@ -150,13 +149,13 @@ def make_tuple(data):
 def QAM_to_complex(data):
     output = []
     for i in range(0, len(data), 4):
-        I = (-2*data[i] + 3)*(2*data[i+1]-1)
-        Q = (-2*data[i+2] + 3)*(2*data[i+3]-1)
+        I = (-2*data[i+1] + 3)*(2*data[i]-1)
+        Q = (-2*data[i+3] + 3)*(2*data[i+2]-1)
         output.append(1/(3*2**(1/2.0))*(I+Q*1j))
 
     return output
-def QAM_demodulate(data):
-    return map(lambda x: (int(x.real)+1, int(abs(x.real-2)+1),int(x.imag)+1, int(abs(x.imag-2)+1)), data)
+def QAM_demodulate(X, Y):
+    return map(lambda x, y: (0 if x<0 else 1, 1 if (abs(x)-0.59)<0 else 0, 0 if y<0 else 1, 1 if (abs(y)-0.59)<0 else 0), X, Y)
     
 def part_1(symbol_count, mu, sigma, Nsigma):
 
@@ -217,3 +216,18 @@ def part3(test_count, symbol_count, mu, sigma):
     plt.plot(SNR_points, err_mean, color='red')
     plt.show()
 
+
+def part4(symbol_count, mu, sigma, Nsigma):
+    data = gen_data(symbol_count)
+    data = QAM_to_complex(data)
+    data, H = ChannelGain(data, mu, sigma, len(data))
+    data = AWGN(data, mu, Nsigma, len(data))
+    X = map(lambda x, y: (x/y).real, data, H)
+    Y = map(lambda x, y: (x/y).imag, data, H)
+    plt.grid(color='r', linestyle='--', linewidth=1)
+    plt.scatter(X, Y, color='red')
+    x = (np.array([3, 3 ,3, 3, 1, 1, 1, 1, -1, -1, -1, -1, -3, -3, -3, -3])*(1/(3*2**(1/2.0)))).tolist()
+    y = (np.array([3, 1, -1, -3]*4)*(1/(3*2**(1/2.0)))).tolist()
+
+    plt.scatter(x, y, color="yellow")
+    plt.show()

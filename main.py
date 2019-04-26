@@ -12,17 +12,24 @@ test_count = 100
 # part_1(symbol_count, mu, sigma, Nsigma)
 # part_2(test_count, symbol_count, mu, sigma)
 # part3(test_count, symbol_count, mu, sigma)
+# part4(symbol_count, mu, sigma, Nsigma)
 
-data = gen_data(symbol_count)
-data = QAM_to_complex(data)
-data, H = ChannelGain(data, mu, sigma, len(data))
-data = AWGN(data, mu, Nsigma, len(data))
-X = map(lambda x, y: (x/y).real, data, H)
-Y = map(lambda x, y: (x/y).imag, data, H)
+err_mean = []
+SNR_points = []
+for i in range(test_count):
+    raw_data1 = gen_data(symbol_count)
+    raw_data = QAM_to_complex(raw_data1)
+    data, H = ChannelGain(raw_data, mu, Nsigma, symbol_count/4)    
+    data = AWGN(data, mu, 1/((i+0+1)*5.0), symbol_count/4)
+
+    X = map(lambda x, y: (x/y).real, data, H)
+    Y = map(lambda x, y: (x/y).imag, data, H)
+    z = QAM_demodulate(X, Y)
+    
+    print("err prob for i = " + str(i) +" = " + str(err_prob(unpack(z, 4), raw_data1)))
+    err_mean.append(err_prob(unpack(z, 4), raw_data1))
+    SNR_points.append((i/5))
+
 plt.grid(color='r', linestyle='--', linewidth=1)
-plt.scatter(X, Y, color='red')
-x = (np.array([3, 3 ,3, 3, 1, 1, 1, 1, -1, -1, -1, -1, -3, -3, -3, -3])*(1/(3*2**(1/2.0)))).tolist()
-y = (np.array([3, 1, -1, -3]*4)*(1/(3*2**(1/2.0)))).tolist()
-
-plt.scatter(x, y, color="yellow")
+plt.plot(SNR_points, err_mean, color='red')
 plt.show()
