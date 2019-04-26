@@ -35,6 +35,7 @@ def AWGN(data, mu, Nsigma, symbol_count):
     res = map(lambda x,y: x+y, data, N)
 
     return  res
+
 def convert_to_symbol(X, Y):
 
     x1 = map(lambda x: 0 if x>=0 else 1, X)
@@ -146,6 +147,17 @@ def make_tuple(data):
         res.append((data[i], data[i+1]))
     return res
 
+def QAM_to_complex(data):
+    output = []
+    for i in range(0, len(data), 4):
+        I = (-2*data[i] + 3)*(2*data[i+1]-1)
+        Q = (-2*data[i+2] + 3)*(2*data[i+3]-1)
+        output.append(1/(3*2**(1/2.0))*(I+Q*1j))
+
+    return output
+def QAM_demodulate(data):
+    return map(lambda x: (int(x.real)+1, int(abs(x.real-2)+1),int(x.imag)+1, int(abs(x.imag-2)+1)), data)
+    
 def part_1(symbol_count, mu, sigma, Nsigma):
 
     data, H = ChannelGain(make_complex(gen_symbol(symbol_count)), mu, sigma, symbol_count)    
@@ -158,7 +170,6 @@ def part_1(symbol_count, mu, sigma, Nsigma):
     plt.scatter(X, Y, color='red')
     plt.scatter([0.7, 0.7, -0.7, -0.7], [0.7, -0.7, 0.7, -0.7], color="yellow")
     plt.show()
-
 
 def part_2(test_count, symbol_count, mu, sigma):
     err_mean = []
@@ -205,3 +216,4 @@ def part3(test_count, symbol_count, mu, sigma):
     plt.grid(color='r', linestyle='--', linewidth=1)
     plt.plot(SNR_points, err_mean, color='red')
     plt.show()
+
