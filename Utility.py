@@ -186,7 +186,7 @@ def part_2(test_count, symbol_count, mu, sigma):
         Y = map(lambda x, y: (x/y).imag, data, H)
         z = convert_to_symbol(X, Y)
         
-        err_mean.append(err_prob(z, symbols))
+        err_mean.append(err_prob(unpack(z), unpack(symbols)))
         SNR_points.append((i)*1.0)
 
     plt.grid(color='r', linestyle='--', linewidth=1)
@@ -212,7 +212,7 @@ def part3(test_count, symbol_count, mu, sigma):
         data = err_correction(data)
         data = decode(data)
         data = pack_data(data)
-        err_mean.append(err_prob(pack_data(raw_data1), data))
+        err_mean.append(err_prob(raw_data1, unpack(data)))
         SNR_points.append((i)*1.0)
 
     plt.grid(color='r', linestyle='--', linewidth=1)
@@ -247,8 +247,7 @@ def part4_2(test_count, symbol_count, mu, sigma):
         X = map(lambda x, y: (x/y).real, data, H)
         Y = map(lambda x, y: (x/y).imag, data, H)
         z = QAM_demodulate(X, Y)
-        
-        print("err prob for i = " + str(i) +" = " + str(err_prob(unpack(z, 4), raw_data1)))
+
         err_mean.append(err_prob(unpack(z, 4), raw_data1))
         SNR_points.append((i/2))
 
